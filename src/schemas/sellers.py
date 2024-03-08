@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from .books import ReturnedBook
 
 __all__ = ["IncommingSeller", "ReturnedSeller", "ReturnedAllSellers", "ReturnedSellerWithBooks"]
@@ -19,7 +20,7 @@ class ReturnedSeller(BaseSeller):
 
 
 class ReturnedAllSellers(BaseModel):
-    sellers : list[ReturnedSeller]
+    sellers: list[ReturnedSeller]
 
 
 class ReturnedSellerWithBooks(BaseSeller):

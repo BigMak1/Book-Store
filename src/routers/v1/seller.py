@@ -1,4 +1,5 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, Response, status
 from icecream import ic
 from sqlalchemy import select
@@ -7,8 +8,8 @@ from sqlalchemy.orm import selectinload
 
 from src.configurations.database import get_async_session
 from src.models.sellers import Seller
-from src.schemas import IncommingSeller, ReturnedAllSellers, ReturnedSeller, ReturnedSellerWithBooks
-
+from src.routers.v1.token import pwd_context, valid_user_token
+from src.schemas import IncommingSeller, ReturnedAllSellers, ReturnedSeller, ReturnedSellerWithBooks, TokenData
 
 sellers_router = APIRouter(tags=["sellers"], prefix="/sellers")
 
@@ -21,7 +22,7 @@ async def create_seller(seller: IncommingSeller, session: DBSession):
         first_name=seller.first_name,
         last_name=seller.last_name,
         email=seller.email,
-        password=seller.password
+        hash_password=pwd_context.hash(seller.password),
     )
 
     session.add(new_seller)
@@ -39,7 +40,7 @@ async def get_all_sellers(session: DBSession):
 
 
 @sellers_router.get("/{seller_id}", response_model=ReturnedSellerWithBooks)
-async def get_seller(seller_id: int, session: DBSession):
+async def get_seller(seller_id: int, session: DBSession, token: Annotated[TokenData, Depends(valid_user_token)]):
     res = await session.execute(select(Seller).where(Seller.id == seller_id).options(selectinload(Seller.books)))
     seller = res.scalar_one_or_none()
     return seller

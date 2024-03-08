@@ -5,15 +5,19 @@
 # поэтому перешел на этот плагин. Он тоже хорош :-)
 
 # Создаем продавца
+
 POST http://localhost:8000/api/v1/sellers/ HTTP/1.1
 content-type: application/json
 
 {
     "first_name": "Maxim",
     "last_name": "Konovalov",
-    "email": "mkonovalov@mail.ru",
+    "email": "max",
     "password": "qwerty"
 }
+
+###
+
 
 ###
 
@@ -23,7 +27,7 @@ GET http://localhost:8000/api/v1/sellers/ HTTP/1.1
 ###
 
 # Получаем одного продавца по его ИД
-GET http://localhost:8000/api/v1/sellers/6 HTTP/1.1
+GET http://localhost:8000/api/v1/sellers/1 HTTP/1.1
 
 ###
 
@@ -42,7 +46,7 @@ content-type: application/json
 ###
 
 # Удаляем продавца
-DELETE http://localhost:8000/api/v1/sellers/5 HTTP/1.1
+DELETE http://localhost:8000/api/v1/sellers/1 HTTP/1.1
 content-type: application/json
 
 ###
@@ -56,7 +60,7 @@ content-type: application/json
     "author": "Robert Martin",
     "pages": 427,
     "year": 2007,
-    "seller_id": 6
+    "seller_id": 1
 }
 
 ###

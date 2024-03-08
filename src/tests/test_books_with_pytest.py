@@ -3,25 +3,24 @@ from fastapi import status
 from sqlalchemy import select
 
 from src.models import books, sellers
-
-result = {
-    "books": [
-        {"author": "fdhgdh", "title": "jdhdj", "year": 1997},
-        {"author": "fdhgdfgfrh", "title": "jrrgdhdj", "year": 2001},
-    ]
-}
+from src.routers.v1.token import create_access_token
 
 
 # Тест на ручку создающую книгу
 @pytest.mark.asyncio
 async def test_create_book(db_session, async_client):
-    seller = sellers.Seller(first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", password="qwerty")
+    seller = sellers.Seller(
+        first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", hash_password="qwerty"
+    )
 
     db_session.add(seller)
     await db_session.flush()
-    
-    data = {"title": "Wrong Code", "author": "Robert Martin", "pages": 104, "year": 2007, "seller_id": seller.id}
-    response = await async_client.post("/api/v1/books/", json=data)
+
+    book = {"title": "Wrong Code", "author": "Robert Martin", "pages": 104, "year": 2007, "seller_id": seller.id}
+
+    token = create_access_token({"sub": seller.email})
+
+    response = await async_client.post("/api/v1/books/", json=book, headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -33,7 +32,7 @@ async def test_create_book(db_session, async_client):
         "author": "Robert Martin",
         "count_pages": 104,
         "year": 2007,
-        "seller_id": seller.id
+        "seller_id": seller.id,
     }
 
 
@@ -41,7 +40,9 @@ async def test_create_book(db_session, async_client):
 @pytest.mark.asyncio
 async def test_get_books(db_session, async_client):
 
-    seller = sellers.Seller(first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", password="qwerty")
+    seller = sellers.Seller(
+        first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", hash_password="qwerty"
+    )
 
     db_session.add(seller)
     await db_session.flush()
@@ -63,8 +64,22 @@ async def test_get_books(db_session, async_client):
     # Проверяем интерфейс ответа, на который у нас есть контракт.
     assert response.json() == {
         "books": [
-            {"title": "Eugeny Onegin", "author": "Pushkin", "year": 2001, "id": book.id, "count_pages": 104, "seller_id": seller.id},
-            {"title": "Mziri", "author": "Lermontov", "year": 1997, "id": book_2.id, "count_pages": 104, "seller_id": seller.id}
+            {
+                "title": "Eugeny Onegin",
+                "author": "Pushkin",
+                "year": 2001,
+                "id": book.id,
+                "count_pages": 104,
+                "seller_id": seller.id,
+            },
+            {
+                "title": "Mziri",
+                "author": "Lermontov",
+                "year": 1997,
+                "id": book_2.id,
+                "count_pages": 104,
+                "seller_id": seller.id,
+            },
         ]
     }
 
@@ -73,7 +88,9 @@ async def test_get_books(db_session, async_client):
 @pytest.mark.asyncio
 async def test_get_single_book(db_session, async_client):
 
-    seller = sellers.Seller(first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", password="qwerty")
+    seller = sellers.Seller(
+        first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", hash_password="qwerty"
+    )
 
     db_session.add(seller)
     await db_session.flush()
@@ -97,7 +114,7 @@ async def test_get_single_book(db_session, async_client):
         "year": 2001,
         "count_pages": 104,
         "id": book.id,
-        "seller_id": seller.id
+        "seller_id": seller.id,
     }
 
 
@@ -105,7 +122,9 @@ async def test_get_single_book(db_session, async_client):
 @pytest.mark.asyncio
 async def test_delete_book(db_session, async_client):
 
-    seller = sellers.Seller(first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", password="qwerty")
+    seller = sellers.Seller(
+        first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", hash_password="qwerty"
+    )
 
     db_session.add(seller)
     await db_session.flush()
@@ -131,7 +150,9 @@ async def test_delete_book(db_session, async_client):
 @pytest.mark.asyncio
 async def test_update_book(db_session, async_client):
 
-    seller = sellers.Seller(first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", password="qwerty")
+    seller = sellers.Seller(
+        first_name="Maxim", last_name="Konovalov", email="mkonovalov@mail.ru", hash_password="qwerty"
+    )
 
     db_session.add(seller)
     await db_session.flush()
@@ -142,9 +163,18 @@ async def test_update_book(db_session, async_client):
     db_session.add(book)
     await db_session.flush()
 
+    new_book = {
+        "title": "Mziri",
+        "author": "Lermontov",
+        "count_pages": 100,
+        "year": 2007,
+        "id": book.id,
+        "seller_id": seller.id,
+    }
+    token = create_access_token({"sub": seller.email})
+
     response = await async_client.put(
-        f"/api/v1/books/{book.id}",
-        json={"title": "Mziri", "author": "Lermontov", "count_pages": 100, "year": 2007, "id": book.id,  "seller_id": seller.id}
+        f"/api/v1/books/{book.id}", json=new_book, headers={"Authorization": f"Bearer {token}"}
     )
 
     assert response.status_code == status.HTTP_200_OK

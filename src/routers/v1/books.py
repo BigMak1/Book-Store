@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configurations.database import get_async_session
 from src.models.books import Book
-from src.schemas import IncomingBook, ReturnedAllBooks, ReturnedBook
+from src.routers.v1.token import valid_user_token
+from src.schemas import IncomingBook, ReturnedAllBooks, ReturnedBook, TokenData
 
 books_router = APIRouter(tags=["books"], prefix="/books")
 
@@ -17,16 +18,11 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 
 # Ручка для создания записи о книге в БД. Возвращает созданную книгу.
 @books_router.post("/", response_model=ReturnedBook, status_code=status.HTTP_201_CREATED)  # Прописываем модель ответа
-async def create_book(
-    book: IncomingBook, session: DBSession
-):  # прописываем модель валидирующую входные данные и сессию как зависимость.
+async def create_book(book: IncomingBook, session: DBSession, token: Annotated[TokenData, Depends(valid_user_token)]):
+    # прописываем модель валидирующую входные данные и сессию как зависимость.
     # это - бизнес логика. Обрабатываем данные, сохраняем, преобразуем и т.д.
     new_book = Book(
-        title=book.title,
-        author=book.author,
-        year=book.year,
-        count_pages=book.count_pages,
-        seller_id=book.seller_id
+        title=book.title, author=book.author, year=book.year, count_pages=book.count_pages, seller_id=book.seller_id
     )
     session.add(new_book)
     await session.flush()
@@ -47,7 +43,10 @@ async def get_all_books(session: DBSession):
 
 # Ручка для получения книги по ее ИД
 @books_router.get("/{book_id}", response_model=ReturnedBook)
-async def get_book(book_id: int, session: DBSession):
+async def get_book(
+    book_id: int,
+    session: DBSession,
+):
     res = await session.get(Book, book_id)
     return res
 
@@ -65,7 +64,9 @@ async def delete_book(book_id: int, session: DBSession):
 
 # Ручка для обновления данных о книге
 @books_router.put("/{book_id}")
-async def update_book(book_id: int, new_data: ReturnedBook, session: DBSession):
+async def update_book(
+    book_id: int, new_data: ReturnedBook, session: DBSession, token: Annotated[TokenData, Depends(valid_user_token)]
+):
     # Оператор "морж", позволяющий одновременно и присвоить значение и проверить его.
     if updated_book := await session.get(Book, book_id):
         updated_book.author = new_data.author

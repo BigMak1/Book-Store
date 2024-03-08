@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     # for PostgreSQL
     db_host: str
     db_name: str
+
+    algorithm: str
+    secret_key: str
+    access_token_expire_minutes: int
+
     db_test_name: str = "fastapi_project_test_db"
     max_connection_count: int = 10
 
